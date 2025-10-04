@@ -122,5 +122,5 @@ with st.form(key='my_form'):
         else:
             st.write("全ての項目を選択してください。")
             
-if st.button("アプリの終了"):
-    os._exit(0)
+#if st.button("アプリの終了"):
+#    os._exit(0)

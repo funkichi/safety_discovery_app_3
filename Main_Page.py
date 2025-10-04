@@ -193,5 +193,5 @@ if uploaded_file is not None:
 else:
     st.write("画像をアップロードしてください。")
     
-if st.button("アプリの終了"):
-    os._exit(0)
+#if st.button("アプリの終了"):
+#    os._exit(0)
