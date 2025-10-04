@@ -5,13 +5,18 @@ import base64
 from openai import OpenAI
 import os
 import io
+import httpx
 
 # OpenAI APIキーの設定
 OPENAI_API_KEY = st.secrets["openai_api_key"]
 
 # OpenAIクライアントの初期化
-client = OpenAI(api_key=OPENAI_API_KEY)
+#client = OpenAI(api_key=OPENAI_API_KEY)
 
+client = OpenAI(
+    api_key=OPENAI_API_KEY,
+    http_client=httpx.Client(proxies=None) # 明示的にプロキシをNoneに設定
+)
 
 # --- 画像の回転を修正する関数 ---
 def correct_image_orientation(pil_image):
