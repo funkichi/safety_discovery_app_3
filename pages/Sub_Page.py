@@ -7,7 +7,6 @@ import os
 
 #画像サイズを変数に代入
 size_logo = (350, 350)
-#size_logo2 = (250, 250)
 size_area1 = (200, 200)
 size_area2 = (200, 200)
 size_area3 = (200, 200)
@@ -16,8 +15,6 @@ size_disaster = (200, 200)
 #画像ファイルを読み込んでthumbnailでサイズを指定
 image_logo = Image.open('Material/logo.png')
 image_logo.thumbnail(size_logo)
-#image_logo2 = Image.open('Material/logo2.png')
-#image_logo2.thumbnail(size_logo2)
 image_area1 = Image.open('Material/area1.png')
 image_area1.thumbnail(size_area1)
 image_area2 = Image.open('Material/area2.png')
@@ -27,7 +24,7 @@ image_area3.thumbnail(size_area3)
 image_disaster = Image.open('Material/disaster.png')
 image_disaster.thumbnail(size_disaster)
 
-#画像をバイト列として読み込みbase64エンコードする(streamlitではローカル画像を直接HTMLタグで参照できないため)
+#画像をバイト列として読み込みbase64エンコードする(streamlitでは画像をHTMLタグで参照できないため)
 def get_image_base64(image):
     buffered = io.BytesIO()
     image.save(buffered, format="PNG")
@@ -35,11 +32,9 @@ def get_image_base64(image):
     return img_str
 
 #base64エンコードされた文字列を取得
-#img_str_logo2 = get_image_base64(image_logo2)
 img_str_logo = get_image_base64(image_logo)
 
 #HTMLで画像を表示する
-#st.markdown(f'<p style="text-align: center;"><img src="data:image/png;base64,{img_str_logo2}"></p>', unsafe_allow_html=True)
 st.markdown(f'<p style="text-align: center;"><img src="data:image/png;base64,{img_str_logo}"></p>', unsafe_allow_html=True)
 
 #3列改行
@@ -49,13 +44,10 @@ for i in range(3):
 # pandasでcsvファイルを読み込む
 df = pd.read_csv('DataBase/避難場所.csv')
 
-# --- ここからセレクトボックスの絞り込みロジック ---
-
 # 1. エリアのセレクトボックス
 st.image(image_area1)
-# まず、全てのユニークなエリアを取得
 available_areas = list(df['エリア'].drop_duplicates())
-selected_location_1 = st.selectbox("", available_areas, label_visibility="collapsed") # label_visibilityを"collapsed"に変更
+selected_location_1 = st.selectbox("", available_areas, label_visibility="collapsed")
 
 # 2. 都道府県のセレクトボックス
 # エリアが選択されたら、そのエリアに属する都道府県のみを抽出
@@ -81,22 +73,19 @@ if selected_location_1: # エリアが選択されている場合
             available_disasters = list(filtered_df_by_area1['災害'].drop_duplicates())
             selected_disaster = st.selectbox("災害の種類を選択してください", available_disasters, label_visibility="collapsed")
         else:
-            selected_disaster = st.selectbox("災害の種類を選択してください", [], label_visibility="collapsed") # 選択肢がない場合は空リスト
+            selected_disaster = st.selectbox("災害の種類を選択してください", [], label_visibility="collapsed")
     else:
-        selected_location_3 = st.selectbox("市区町村を選択してください", [], label_visibility="collapsed") # 選択肢がない場合は空リスト
-        selected_disaster = st.selectbox("災害の種類を選択してください", [], label_visibility="collapsed") # 選択肢がない場合は空リスト
+        selected_location_3 = st.selectbox("市区町村を選択してください", [], label_visibility="collapsed") 
+        selected_disaster = st.selectbox("災害の種類を選択してください", [], label_visibility="collapsed") 
 else:
-    selected_location_2 = st.selectbox("都道府県を選択してください", [], label_visibility="collapsed") # 選択肢がない場合は空リスト
-    selected_location_3 = st.selectbox("市区町村を選択してください", [], label_visibility="collapsed") # 選択肢がない場合は空リスト
-    selected_disaster = st.selectbox("災害の種類を選択してください", [], label_visibility="collapsed") # 選択肢がない場合は空リスト
-
+    selected_location_2 = st.selectbox("都道府県を選択してください", [], label_visibility="collapsed")
+    selected_location_3 = st.selectbox("市区町村を選択してください", [], label_visibility="collapsed")
+    selected_disaster = st.selectbox("災害の種類を選択してください", [], label_visibility="collapsed")
 
 # 検索ボタンが押された時の動作を記述
 with st.form(key='my_form'):
     #検索ボタンが押された時
     if st.form_submit_button("検索"):
-        # 最終的な選択肢に基づいてDataFrameをフィルタリング
-        # すべてのセレクトボックスが選択されていることを前提とします。
         if selected_location_1 and selected_location_2 and selected_location_3 and selected_disaster:
             selected_row = df[
                 (df["エリア"] == selected_location_1) &
@@ -111,16 +100,12 @@ with st.form(key='my_form'):
                 st.dataframe(selected_row)
 
                 # MAP列からURLを取得し、リンクとして表示
-                # 複数行のURLをすべて表示したい場合は、ループ処理が必要です。
                 st.markdown("<h5 style='text-align: left; color: darkturquoise;'>関連マップ</h5>", unsafe_allow_html=True)
                 for index, row in selected_row.iterrows():
                     map_url = row["MAP"]
-                    map_name = f"{row['市区町村']} の避難場所マップを見る" # 例えば「場所名」も利用してリンク名をカスタマイズ
+                    map_name = f"{row['市区町村']} の避難場所マップを見る"
                     st.markdown(f"[{map_name}]({map_url})")
             else:
                 st.write("該当する避難場所は見つかりませんでした。")
         else:
             st.write("全ての項目を選択してください。")
-            
-#if st.button("アプリの終了"):
-#    os._exit(0)

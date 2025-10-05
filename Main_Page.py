@@ -10,15 +10,12 @@ import httpx
 # OpenAI APIキーの設定
 OPENAI_API_KEY = st.secrets["openai_api_key"]
 
-# OpenAIクライアントの初期化
-#client = OpenAI(api_key=OPENAI_API_KEY)
-
 client = OpenAI(
     api_key=OPENAI_API_KEY,
-    http_client=httpx.Client(proxies=None) # 明示的にプロキシをNoneに設定
+    http_client=httpx.Client(proxies=None) # プロキシをNoneに設定※そうしないとStreamlitcloudでエラーでる。
 )
 
-# --- 画像の回転を修正する関数 ---
+# 画像の回転を修正する関数
 def correct_image_orientation(pil_image):
     try:
         for orientation in ExifTags.TAGS.keys():
@@ -30,7 +27,7 @@ def correct_image_orientation(pil_image):
             # Orientationタグの値を取得
             orientation_value = exif.get(orientation)
             
-            # Orientationタグの値に基づいて画像を回転
+            # Orientationタグの値から画像を回転
             if orientation_value == 3:
                 pil_image = pil_image.transpose(Image.ROTATE180)
             elif orientation_value == 6:
@@ -43,32 +40,19 @@ def correct_image_orientation(pil_image):
         pass
     
     return pil_image
-# --- ここまで ---
 
 #画像サイズを変数に代入
 size_logo = (350, 350)
-#size_logo2 = (250, 250)
-#size_city = (160, 160)
-#size_date = (200, 200)
 size_option = (180, 180)
 
 #画像ファイルを読み込んでthumbnailでサイズを指定
 image_logo = Image.open('Material/logo.png')
 image_logo.thumbnail(size_logo)
-#image_logo2 = Image.open('Material/logo2.png')
-#image_logo2.thumbnail(size_logo2)
-#image_city = Image.open('Material/city.png')
-#image_city.thumbnail(size_city)
-#image_date = Image.open('Material/date.png')
-#image_date.thumbnail(size_date)
-#image_option = Image.open('Material/option.png')
-#image_option.thumbnail(size_option)
 
 #画像を保存
-#image_logo2.save("Material/logo2.png")
 image_logo.save("Material/logo.png")
 
-#画像をバイト列として読み込みbase64エンコードする(streamlitではローカル画像を直接HTMLタグで参照できないため)
+#画像をバイト列として読み込みbase64エンコードする(streamlitではHTMLタグで参照できないため)
 def get_image_base64(image):
     buffered = io.BytesIO()
     image.save(buffered, format="PNG")
@@ -76,11 +60,9 @@ def get_image_base64(image):
     return img_str
 
 #base64エンコードされた文字列を取得
-#img_str_logo2 = get_image_base64(image_logo2)
 img_str_logo = get_image_base64(image_logo)
 
 #HTMLで画像を表示する
-#st.markdown(f'<p style="text-align: center;"><img src="data:image/png;base64,{img_str_logo2}"></p>', unsafe_allow_html=True)
 st.markdown(f'<p style="text-align: center;"><img src="data:image/png;base64,{img_str_logo}"></p>', unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader("画像をアップロードしてください", type=["jpg", "jpeg", "png", "gif"])
@@ -89,22 +71,21 @@ if uploaded_file is not None:
     # アップロードされたファイルをPIL Imageとして開く
     image = Image.open(uploaded_file)
 
-    # --- ここで画像の向きを修正 ---
+    # ここで画像の向きを修正
     image = correct_image_orientation(image)
-    # --- ここまで ---
 
     st.image(image, caption="アップロードされた画像", use_column_width=True)
     st.write("画像を解析しています。しばらくお待ちください...")
 
-    # 画像をBase64エンコードする関数 (変更なし)
+    # 画像をBase64エンコードする関数
     def encode_image_to_base64(pil_image):
         buffered = BytesIO()
         # 画像のフォーマットがPNGの場合、RGBAモードで保存
         if pil_image.mode == 'RGBA' and pil_image.format == 'PNG':
             pil_image.save(buffered, format="PNG")
-        elif pil_image.mode == 'RGBA' and pil_image.format is None: # for cases where format is None for RGBA (e.g. from BytesIO)
+        elif pil_image.mode == 'RGBA' and pil_image.format is None:
              pil_image.save(buffered, format="PNG")
-        else: # その他の場合はJPEGとして保存 (透明度が失われる可能性あり)
+        else: # その他の場合はJPEGとして保存
             if pil_image.mode == 'RGBA':
                 # RGBAをRGBに変換してJPEGとして保存
                 pil_image = pil_image.convert('RGB')
@@ -115,7 +96,7 @@ if uploaded_file is not None:
     base64_image = encode_image_to_base64(image)
 
     try:
-        # プロンプトを変数に格納
+        # プロンプト
         vision_prompt = """
         画像の状況を説明し、考慮すべき危険を洗い出してください。
         また、以下の"###要件"に従って回答してください。
@@ -162,14 +143,14 @@ if uploaded_file is not None:
         この画像は「高積み荷物の運搬時のリスク」が顕著に現れているため、特に「視界不良」「荷崩れ」「転倒」に注意が必要です。
         """
 
-        # Vision APIを使って画像の内容を解説させる
+        # Vision APIを使って画像をサーチ
         response = client.chat.completions.create(
-            model="gpt-4o", # Vision機能を持つモデルを指定
+            model="gpt-4o", 
             messages=[
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": vision_prompt}, # 変数化したプロンプトを使用
+                        {"type": "text", "text": vision_prompt}, 
                         {
                             "type": "image_url",
                             "image_url": {
@@ -192,6 +173,3 @@ if uploaded_file is not None:
         st.error("アプリ開発者へ問い合わせてください。")
 else:
     st.write("画像をアップロードしてください。")
-    
-#if st.button("アプリの終了"):
-#    os._exit(0)
