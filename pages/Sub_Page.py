@@ -5,14 +5,92 @@ import base64
 import io
 import os
 
-#画像サイズを変数に代入
-size_logo = (350, 350)
+# ページ設定（画面の幅を広く使う）
+#st.set_page_config(page_title="My Streamlit App", layout="wide")
+
+# スタイル設定（背景色と文字色とフォントを定義）
+def apply_custom_style():    
+    main_bg_color = "#F5BAB1"       # メイン画面背景色
+    sidebar_bg_color = "#B3F5AE"    # サイドバー背景色
+    sidebar_text_color = "#000000"  # サイドバー文字色
+    font_family = "MAX太丸ｺﾞｼｯｸ体"     # フォント
+
+    st.markdown(
+        f"""
+        <style>
+        /* メイン画面全体の背景色 */
+        .stApp {{
+            background-color: {main_bg_color};
+        }}
+        
+        /* メイン画面の文字色 */
+        .stApp .main h1,
+        .stApp .main h2,
+        .stApp .main h3,
+        .stApp .main label {{
+            font-family: "{font_family}" !important;
+            color: #000000 !important;
+        }}
+
+        /* st.write の文字色 */
+        .stApp .main [data-testid="stMarkdownContainer"] p {{
+            font-family: "{font_family}" !important;
+            color: #000000 !important;
+        }}
+
+        /* ボタンの文字色 */
+        .stApp .main .stButton button,
+        .stApp .main .stButton button p,
+        .stApp .main .stButton button span,
+        .stApp .main .stButton button div,
+        [data-testid="baseButton-secondary"] p,
+        [data-testid="baseButton-primary"] p {{
+            color: #FFFFFF !important;
+            font-family: "{font_family}" !important;
+            -webkit-text-fill-color: #FFFFFF !important; /* ブラウザ対策 */
+        }}
+
+        /* リンクの文字色 */
+        .stApp .main a {{
+            color: #0000EE;
+            font-family: "{font_family}";
+        }}
+      
+        /* サイドバーの背景色 */
+        [data-testid="stSidebar"] {{
+            background-color: {sidebar_bg_color};
+        }}
+
+        /* サイドバー内の文字色とフォント */
+        [data-testid="stSidebar"], 
+        [data-testid="stSidebar"] p, 
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3, 
+        [data-testid="stSidebar"] label, 
+        [data-testid="stSidebar"] span,
+        [data-testid="stSidebar"] .stMarkdown,
+        [data-testid="stSidebarNav"] span,
+        [data-testid="stSidebarNav"] a {{ 
+            font-family: {font_family} !important;
+            color: {sidebar_text_color} !important;
+        }}     
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# スタイルを適用
+apply_custom_style()
+
+# 画像サイズを変数に代入
+size_logo = (1200, 360)
 size_area1 = (200, 200)
 size_area2 = (200, 200)
 size_area3 = (200, 200)
 size_disaster = (200, 200)
 
-#画像ファイルを読み込んでthumbnailでサイズを指定
+# 画像ファイルを読み込んでthumbnailでサイズを指定
 image_logo = Image.open('Material/logo.png')
 image_logo.thumbnail(size_logo)
 image_area1 = Image.open('Material/area1.png')
@@ -24,20 +102,20 @@ image_area3.thumbnail(size_area3)
 image_disaster = Image.open('Material/disaster.png')
 image_disaster.thumbnail(size_disaster)
 
-#画像をバイト列として読み込みbase64エンコードする(streamlitでは画像をHTMLタグで参照できないため)
+# 画像をバイト列として読み込んでbase64エンコードする(streamlitでは画像をHTMLタグで参照できないため)
 def get_image_base64(image):
     buffered = io.BytesIO()
     image.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode()
     return img_str
 
-#base64エンコードされた文字列を取得
+# base64エンコードされた文字列を取得
 img_str_logo = get_image_base64(image_logo)
 
-#HTMLで画像を表示する
+# HTMLで画像を表示する
 st.markdown(f'<p style="text-align: center;"><img src="data:image/png;base64,{img_str_logo}"></p>', unsafe_allow_html=True)
 
-#3列改行
+# 3列改行
 for i in range(3):
     st.write('\n')
 
@@ -82,7 +160,7 @@ else:
     selected_location_3 = st.selectbox("市区町村を選択してください", [], label_visibility="collapsed")
     selected_disaster = st.selectbox("災害の種類を選択してください", [], label_visibility="collapsed")
 
-# 検索ボタンが押された時の動作を記述
+# 検索ボタンが押された時の動作
 with st.form(key='my_form'):
     #検索ボタンが押された時
     if st.form_submit_button("検索"):
@@ -99,7 +177,7 @@ with st.form(key='my_form'):
                 # 検索結果のDataFrameを表示
                 st.dataframe(selected_row)
 
-                # MAP列からURLを取得し、リンクとして表示
+                # csvファイルのMAP列からURLを取得し、リンクとして表示
                 st.markdown("<h5 style='text-align: left; color: darkturquoise;'>関連マップ</h5>", unsafe_allow_html=True)
                 for index, row in selected_row.iterrows():
                     map_url = row["MAP"]

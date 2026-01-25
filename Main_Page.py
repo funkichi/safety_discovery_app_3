@@ -7,6 +7,85 @@ import os
 import io
 import httpx
 
+# ページ設定（画面の幅を広く使う）#あとで使うかもしれないのでコメントアウトで置いておく
+#st.set_page_config(page_title="My Streamlit App", layout="wide")
+
+# スタイル設定（背景色と文字色とフォントを定義）
+def apply_custom_style():    
+    main_bg_color = "#F5BAB1"       # メイン画面背景色
+    main_text_color = "#000000"     # メイン画面文字色
+    sidebar_bg_color = "#B3F5AE"    # サイドバー背景色
+    sidebar_text_color = "#000000"  # サイドバー文字色
+    font_family = "MAX太丸ｺﾞｼｯｸ体"     # フォント
+    #font_family = "HGP創英角ﾎﾟｯﾌﾟ体"  # フォント
+
+    st.markdown(
+        f"""
+        <style>
+        /* メイン画面の背景色 */
+        .stApp {{
+            background-color: {main_bg_color};
+            color: {main_text_color};
+        }}
+        
+        /* メイン画面の文字色とフォント */
+        .stApp .main h1,
+        .stApp .main h2,
+        .stApp .main h3, 
+        .stApp .main p,
+        .stApp .main span,
+        .stApp .main label {{
+            font-family: {font_family} !important;
+            color: {main_text_color} !important;
+        }}
+
+        /* アップローダー内の文字色とフォント */
+        .stApp [data-testid="stFileUploader"] section div,
+        .stApp [data-testid="stFileUploader"] section span,
+        .stApp [data-testid="stFileUploader"] section p,
+        .stApp [data-testid="stFileUploader"] section small,
+        .stApp [data-testid="stFileUploaderText"] {{
+            color: white !important;
+            -webkit-text-fill-color: white !important; /* Safari/Chrome対策 */
+        }}
+
+        /* 雲アイコンの色 */
+        .stApp [data-testid="stFileUploader"] svg {{
+            fill: white !important;
+        }}
+
+        /* ボタンの文字色 */
+        [data-testid="stFileUploader"] button p {{
+            color: #FFFFFF !important;
+        }}
+      
+        /* サイドバーの背景色 */
+        [data-testid="stSidebar"] {{
+            background-color: {sidebar_bg_color};
+        }}
+
+        /* サイドバー内の文字色とフォント */
+        [data-testid="stSidebar"], 
+        [data-testid="stSidebar"] p, 
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3, 
+        [data-testid="stSidebar"] label, 
+        [data-testid="stSidebar"] span,
+        [data-testid="stSidebar"] .stMarkdown,
+        [data-testid="stSidebarNav"] span,
+        [data-testid="stSidebarNav"] a {{ 
+            font-family: {font_family} !important;
+            color: {sidebar_text_color} !important;
+        }}     
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# スタイルを適用
+apply_custom_style()
+
 # OpenAI APIキーの設定
 OPENAI_API_KEY = st.secrets["openai_api_key"]
 
@@ -36,14 +115,13 @@ def correct_image_orientation(pil_image):
                 pil_image = pil_image.transpose(Image.ROTATE90)  # 反時計回りに90度 = 時計回りに270度
         
     except (AttributeError, KeyError, IndexError):
-        # Exifデータがない場合やOrientationタグがない場合は何もしない
+        # データがない場合やOrientationタグがない場合は何もしない
         pass
     
     return pil_image
 
 #画像サイズを変数に代入
-size_logo = (350, 350)
-size_option = (180, 180)
+size_logo = (1200, 360)
 
 #画像ファイルを読み込んでthumbnailでサイズを指定
 image_logo = Image.open('Material/logo.png')
@@ -59,13 +137,21 @@ def get_image_base64(image):
     img_str = base64.b64encode(buffered.getvalue()).decode()
     return img_str
 
-#base64エンコードされた文字列を取得
+#base64でエンコードされた文字列を取得
 img_str_logo = get_image_base64(image_logo)
 
 #HTMLで画像を表示する
 st.markdown(f'<p style="text-align: center;"><img src="data:image/png;base64,{img_str_logo}"></p>', unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("画像をアップロードしてください", type=["jpg", "jpeg", "png", "gif"])
+st.write("")
+st.write("")
+st.write("")
+st.write("")
+st.write("")
+
+
+
+uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png", "gif"])
 
 if uploaded_file is not None:
     # アップロードされたファイルをPIL Imageとして開く
@@ -74,7 +160,7 @@ if uploaded_file is not None:
     # ここで画像の向きを修正
     image = correct_image_orientation(image)
 
-    st.image(image, caption="アップロードされた画像", use_column_width=True)
+    st.image(image, use_column_width=True)
     st.write("画像を解析しています。しばらくお待ちください...")
 
     # 画像をBase64エンコードする関数
@@ -94,9 +180,9 @@ if uploaded_file is not None:
 
     # 画像をBase64形式に変換
     base64_image = encode_image_to_base64(image)
-
+    
     try:
-        # プロンプト
+        # AIに渡すプロンプト（入力した画像をこのプロンプトに沿って解析してもらう）
         vision_prompt = """
         画像の状況を説明し、考慮すべき危険を洗い出してください。
         また、以下の"###要件"に従って回答してください。
@@ -124,7 +210,7 @@ if uploaded_file is not None:
         ・フォークリフトがスロープ上にいるため、荷物の重さ・高さによっては傾斜でバランスを崩しやすい。
         5. 接触・衝突の危険 "<改行>"
         ・手すりやトラックの荷台など周囲に構造物が多く、荷物やフォークリフトが接触・衝突する恐れ。
-        6. 荷物の固定不良 "<改行>"
+       6. 荷物の固定不良 "<改行>"
         ・ラップで巻かれているが、固定が不十分だと運搬中に荷崩れする可能性。
         7. 周辺作業者との接触 "<改行>"
         ・プラットフォームは人の通行も多い場所であり、歩行者との接触事故も懸念される。
@@ -143,7 +229,7 @@ if uploaded_file is not None:
         この画像は「高積み荷物の運搬時のリスク」が顕著に現れているため、特に「視界不良」「荷崩れ」「転倒」に注意が必要です。
         """
 
-        # Vision APIを使って画像をサーチ
+        # OpenAI APIを使って画像をサーチして結果を返してもらう
         response = client.chat.completions.create(
             model="gpt-4o", 
             messages=[
