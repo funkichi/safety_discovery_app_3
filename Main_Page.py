@@ -17,40 +17,39 @@ def apply_custom_style():
     sidebar_bg_color = "#B3F5AE"    # サイドバー背景色
     sidebar_text_color = "#000000"  # サイドバー文字色
     font_family = "MAX太丸ｺﾞｼｯｸ体"     # フォント
-    #font_family = "HGP創英角ﾎﾟｯﾌﾟ体"  # フォント
 
     st.markdown(
         f"""
         <style>
-        /* メイン画面の背景色 */
-        .stApp {{
-            background-color: {main_bg_color};
-            color: {main_text_color};
+        /* 1. メイン画面の背景色 - セレクタを強化して確実に適用 */
+        .stApp, [data-testid="stAppViewContainer"] {{
+            background-color: {main_bg_color} !important;
         }}
-        
-        /* メイン画面の文字色とフォント */
+
+        /* 2. メイン画面の文字色とフォント - 引用符を追加 */
         .stApp .main h1,
         .stApp .main h2,
         .stApp .main h3, 
         .stApp .main p,
         .stApp .main span,
         .stApp .main label {{
-            font-family: {font_family} !important;
+            font-family: "{font_family}", sans-serif !important;
             color: {main_text_color} !important;
         }}
 
-        /* アップローダー内の文字色とフォント */
-        .stApp [data-testid="stFileUploader"] section div,
-        .stApp [data-testid="stFileUploader"] section span,
-        .stApp [data-testid="stFileUploader"] section p,
-        .stApp [data-testid="stFileUploader"] section small,
-        .stApp [data-testid="stFileUploaderText"] {{
+        /* 3. アップローダー内の文字色とフォント */
+        [data-testid="stFileUploader"] section div,
+        [data-testid="stFileUploader"] section span,
+        [data-testid="stFileUploader"] section p,
+        [data-testid="stFileUploader"] section small,
+        [data-testid="stFileUploaderText"] {{
             color: white !important;
-            -webkit-text-fill-color: white !important; /* Safari/Chrome対策 */
+            font-family: "{font_family}", sans-serif !important;
+            -webkit-text-fill-color: white !important;
         }}
 
         /* 雲アイコンの色 */
-        .stApp [data-testid="stFileUploader"] svg {{
+        [data-testid="stFileUploader"] svg {{
             fill: white !important;
         }}
 
@@ -59,12 +58,12 @@ def apply_custom_style():
             color: #FFFFFF !important;
         }}
       
-        /* サイドバーの背景色 */
+        /* 4. サイドバーの背景色 */
         [data-testid="stSidebar"] {{
-            background-color: {sidebar_bg_color};
+            background-color: {sidebar_bg_color} !important;
         }}
 
-        /* サイドバー内の文字色とフォント */
+        /* サイドバー内の文字色とフォント - 引用符を追加 */
         [data-testid="stSidebar"], 
         [data-testid="stSidebar"] p, 
         [data-testid="stSidebar"] h1, 
@@ -75,7 +74,7 @@ def apply_custom_style():
         [data-testid="stSidebar"] .stMarkdown,
         [data-testid="stSidebarNav"] span,
         [data-testid="stSidebarNav"] a {{ 
-            font-family: {font_family} !important;
+            font-family: "{font_family}", sans-serif !important;
             color: {sidebar_text_color} !important;
         }}     
         </style>
