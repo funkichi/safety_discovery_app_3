@@ -42,7 +42,7 @@ def correct_image_orientation(pil_image):
     return pil_image
 
 # 画像サイズを変数に代入
-size_logo = (640, 360)
+size_logo = (480, 270)
 size_option = (180, 180)
 
 # 画像ファイルを読み込んでthumbnailでサイズを指定する
