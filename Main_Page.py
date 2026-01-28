@@ -7,93 +7,15 @@ import os
 import io
 import httpx
 
-## ページ設定（画面の幅を広く使う）#あとで使うかもしれないのでコメントアウトで置いておく
-#st.set_page_config(page_title="My Streamlit App", layout="wide")
-
-# スタイル設定（背景色と文字色とフォントを定義）
-def apply_custom_style():    
-    main_bg_color = "#F5BAB1"       # メイン画面背景色
-    main_text_color = "#000000"     # メイン画面文字色
-    sidebar_bg_color = "#B3F5AE"    # サイドバー背景色
-    sidebar_text_color = "#000000"  # サイドバー文字色
-    font_family = "MAX太丸ｺﾞｼｯｸ体"     # フォント
-
-    st.markdown(
-        f"""
-        <style>
-        /* 1. メイン画面の背景色 - セレクタを強化して確実に適用 */
-        .stApp, [data-testid="stAppViewContainer"] {{
-            background-color: {main_bg_color} !important;
-        }}
-
-        /* 2. メイン画面の文字色とフォント - 引用符を追加 */
-        .stApp .main h1,
-        .stApp .main h2,
-        .stApp .main h3, 
-        .stApp .main p,
-        .stApp .main span,
-        .stApp .main label {{
-            font-family: "{font_family}", sans-serif !important;
-            color: {main_text_color} !important;
-        }}
-
-        /* 3. アップローダー内の文字色とフォント */
-        [data-testid="stFileUploader"] section div,
-        [data-testid="stFileUploader"] section span,
-        [data-testid="stFileUploader"] section p,
-        [data-testid="stFileUploader"] section small,
-        [data-testid="stFileUploaderText"] {{
-            color: white !important;
-            font-family: "{font_family}", sans-serif !important;
-            -webkit-text-fill-color: white !important;
-        }}
-
-        /* 雲アイコンの色 */
-        [data-testid="stFileUploader"] svg {{
-            fill: white !important;
-        }}
-
-        /* ボタンの文字色 */
-        [data-testid="stFileUploader"] button p {{
-            color: #FFFFFF !important;
-        }}
-      
-        /* 4. サイドバーの背景色 */
-        [data-testid="stSidebar"] {{
-            background-color: {sidebar_bg_color} !important;
-        }}
-
-        /* サイドバー内の文字色とフォント - 引用符を追加 */
-        [data-testid="stSidebar"], 
-        [data-testid="stSidebar"] p, 
-        [data-testid="stSidebar"] h1, 
-        [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, 
-        [data-testid="stSidebar"] label, 
-        [data-testid="stSidebar"] span,
-        [data-testid="stSidebar"] .stMarkdown,
-        [data-testid="stSidebarNav"] span,
-        [data-testid="stSidebarNav"] a {{ 
-            font-family: "{font_family}", sans-serif !important;
-            color: {sidebar_text_color} !important;
-        }}     
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-# スタイルを適用
-apply_custom_style()
-
 # OpenAI APIキーの設定
-OPENAI_API_KEY = st.secrets["openai_api_key"]
+OPENAI_API_KEY = st.secrets["openai_api_key"] #キーはsecrets.tomlファイルに書く
 
 client = OpenAI(
     api_key=OPENAI_API_KEY,
-    http_client=httpx.Client(proxies=None) # プロキシをNoneに設定※そうしないとStreamlitcloudでエラーでる。
+    http_client=httpx.Client(proxies=None) # プロキシをNoneに設定する（※そうしないとStreamlitcloudでエラーが出る）
 )
 
-# 画像の回転を修正する関数
+# 画像の回転を修正する
 def correct_image_orientation(pil_image):
     try:
         for orientation in ExifTags.TAGS.keys():
@@ -105,7 +27,7 @@ def correct_image_orientation(pil_image):
             # Orientationタグの値を取得
             orientation_value = exif.get(orientation)
             
-            # Orientationタグの値から画像を回転
+            # Orientationタグの値から画像を回転させる
             if orientation_value == 3:
                 pil_image = pil_image.transpose(Image.ROTATE180)
             elif orientation_value == 6:
@@ -114,58 +36,51 @@ def correct_image_orientation(pil_image):
                 pil_image = pil_image.transpose(Image.ROTATE90)  # 反時計回りに90度 = 時計回りに270度
         
     except (AttributeError, KeyError, IndexError):
-        # データがない場合やOrientationタグがない場合は何もしない
+        # Exifデータがない場合やOrientationタグがない場合は何もしない
         pass
     
     return pil_image
 
-#画像サイズを変数に代入
-size_logo = (1200, 360)
+# 画像サイズを変数に代入
+size_logo = (640, 360)
+size_option = (180, 180)
 
-#画像ファイルを読み込んでthumbnailでサイズを指定
+# 画像ファイルを読み込んでthumbnailでサイズを指定する
 image_logo = Image.open('Material/logo.png')
 image_logo.thumbnail(size_logo)
 
-#画像を保存
+# 画像を保存
 image_logo.save("Material/logo.png")
 
-#画像をバイト列として読み込みbase64エンコードする(streamlitではHTMLタグで参照できないため)
+# 画像をバイナリで読み込みbase64でエンコードして文字列化する(streamlitではHTMLタグで参照できないから)
 def get_image_base64(image):
     buffered = io.BytesIO()
     image.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode()
     return img_str
 
-#base64でエンコードされた文字列を取得
+# base64エンコードされた文字列を取得
 img_str_logo = get_image_base64(image_logo)
 
-#HTMLで画像を表示する
+# HTMLで画像を表示する
 st.markdown(f'<p style="text-align: center;"><img src="data:image/png;base64,{img_str_logo}"></p>', unsafe_allow_html=True)
-
-st.write("")
-st.write("")
-st.write("")
-st.write("")
-st.write("")
-
-
 
 uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png", "gif"])
 
 if uploaded_file is not None:
-    # アップロードされたファイルをPIL Imageとして開く
+    # アップロードされたファイルをPIL Imageで開く
     image = Image.open(uploaded_file)
 
-    # ここで画像の向きを修正
+    # ここで画像の向きを修正する
     image = correct_image_orientation(image)
 
-    st.image(image, use_column_width=True)
+    st.image(image, caption="アップロードされた画像", use_column_width=True)
     st.write("画像を解析しています。しばらくお待ちください...")
 
     # 画像をBase64エンコードする関数
     def encode_image_to_base64(pil_image):
         buffered = BytesIO()
-        # 画像のフォーマットがPNGの場合、RGBAモードで保存
+        # 画像のフォーマットがPNGの場合、RGBAで保存
         if pil_image.mode == 'RGBA' and pil_image.format == 'PNG':
             pil_image.save(buffered, format="PNG")
         elif pil_image.mode == 'RGBA' and pil_image.format is None:
@@ -179,9 +94,9 @@ if uploaded_file is not None:
 
     # 画像をBase64形式に変換
     base64_image = encode_image_to_base64(image)
-    
+
     try:
-        # AIに渡すプロンプト（入力した画像をこのプロンプトに沿って解析してもらう）
+        # AIに渡すプロンプト
         vision_prompt = """
         画像の状況を説明し、考慮すべき危険を洗い出してください。
         また、以下の"###要件"に従って回答してください。
@@ -209,7 +124,7 @@ if uploaded_file is not None:
         ・フォークリフトがスロープ上にいるため、荷物の重さ・高さによっては傾斜でバランスを崩しやすい。
         5. 接触・衝突の危険 "<改行>"
         ・手すりやトラックの荷台など周囲に構造物が多く、荷物やフォークリフトが接触・衝突する恐れ。
-       6. 荷物の固定不良 "<改行>"
+        6. 荷物の固定不良 "<改行>"
         ・ラップで巻かれているが、固定が不十分だと運搬中に荷崩れする可能性。
         7. 周辺作業者との接触 "<改行>"
         ・プラットフォームは人の通行も多い場所であり、歩行者との接触事故も懸念される。
@@ -228,7 +143,7 @@ if uploaded_file is not None:
         この画像は「高積み荷物の運搬時のリスク」が顕著に現れているため、特に「視界不良」「荷崩れ」「転倒」に注意が必要です。
         """
 
-        # OpenAI APIを使って画像をサーチして結果を返してもらう
+        # APIを使って画像をサーチ
         response = client.chat.completions.create(
             model="gpt-4o", 
             messages=[
@@ -239,7 +154,7 @@ if uploaded_file is not None:
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}", # Base64エンコードされた画像データをURLとして渡す
+                                "url": f"data:image/jpeg;base64,{base64_image}", # Base64エンコードされた画像データを渡す
                                 "detail": "high"
                             },
                         },
