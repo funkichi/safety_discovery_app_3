@@ -42,8 +42,8 @@ def correct_image_orientation(pil_image):
     return pil_image
 
 # 画像サイズを変数に代入
-size_logo = (480, 270)
-size_option = (180, 180)
+size_logo = (384, 216)
+size_option = (384, 216)
 
 # 画像ファイルを読み込んでthumbnailでサイズを指定する
 image_logo = Image.open('Material/logo.png')
