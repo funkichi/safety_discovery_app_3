@@ -7,7 +7,7 @@ import os
 import io
 import httpx
 
-# ページ設定（画面の幅を広く使う）#あとで使うかもしれないのでコメントアウトで置いておく
+## ページ設定（画面の幅を広く使う）#あとで使うかもしれないのでコメントアウトで置いておく
 #st.set_page_config(page_title="My Streamlit App", layout="wide")
 
 # スタイル設定（背景色と文字色とフォントを定義）
